@@ -15,6 +15,7 @@ import javax.validation.constraints.DecimalMax;
 import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotNull;
 import java.util.Date;
+import java.util.List;
 
 @Getter
 @Setter
@@ -42,4 +43,7 @@ public class ImageDtoIn {
     @DecimalMin("-180.0")
     @DecimalMax("180.0")
     double lng;
+
+    @ApiModelProperty(required = true)
+    private String category;
 }

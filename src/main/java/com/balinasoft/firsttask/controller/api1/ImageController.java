@@ -11,9 +11,16 @@ import io.swagger.annotations.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.validation.Valid;
+
+import java.util.Set;
 
 import static com.balinasoft.firsttask.system.StaticWrapper.wrap;
 
@@ -55,5 +62,12 @@ public class ImageController {
     @ApiOperation(value = "Upload image", response = ImageDtoOut.class, responseContainer = "List")
     public ResponseDto getImages(@RequestParam int page) {
         return wrap(imageService.getImages(page));
+    }
+
+    @Secured("ROLE_USER")
+    @RequestMapping(value = "by-categories", method = RequestMethod.GET)
+    @ApiOperation(value = "Upload image")
+    public ResponseDto getImagesByCategories(@RequestParam Set<String> categories) {
+        return wrap(imageService.getImagesByCategories(categories));
     }
 }

@@ -1,15 +1,18 @@
 package com.balinasoft.firsttask.service;
 
+import com.balinasoft.firsttask.domain.Category;
 import com.balinasoft.firsttask.domain.Image;
+
 import com.balinasoft.firsttask.domain.User;
 import com.balinasoft.firsttask.dto.ImageDtoIn;
 import com.balinasoft.firsttask.dto.ImageDtoOut;
+import com.balinasoft.firsttask.repository.CategoryRepository;
 import com.balinasoft.firsttask.repository.ImageRepository;
 import com.balinasoft.firsttask.repository.UserRepository;
 import com.balinasoft.firsttask.system.error.ApiAssert;
 import com.balinasoft.firsttask.util.StringGenerator;
+import lombok.RequiredArgsConstructor;
 import org.apache.tomcat.util.codec.binary.Base64;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -17,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.imageio.IIOException;
 import javax.imageio.ImageIO;
+import javax.persistence.EntityNotFoundException;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -24,15 +28,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.balinasoft.firsttask.util.SecurityContextHolderWrapper.currentUserId;
 
 @Service
 @Transactional(rollbackFor = Throwable.class)
+@RequiredArgsConstructor
 public class ImageServiceImpl implements ImageService {
 
     @Value("${project.image-folder}")
@@ -45,12 +48,7 @@ public class ImageServiceImpl implements ImageService {
 
     private final ImageRepository imageRepository;
 
-    @Autowired
-    public ImageServiceImpl(UserRepository userRepository,
-                            ImageRepository imageRepository) {
-        this.userRepository = userRepository;
-        this.imageRepository = imageRepository;
-    }
+    private final CategoryRepository categoryRepository;
 
     @Override
     public ImageDtoOut uploadImage(ImageDtoIn imageDtoIn) {
@@ -68,6 +66,14 @@ public class ImageServiceImpl implements ImageService {
         image.setLat(imageDtoIn.getLat());
         image.setLng(imageDtoIn.getLng());
         image.setDate(imageDtoIn.getDate());
+        Category category = categoryRepository.findByName(imageDtoIn.getCategory());
+
+        if (category == null) {
+            throw new EntityNotFoundException("Категория под именем '" + imageDtoIn.getCategory() + "' не существует в базе данных!");
+        } else {
+            image.setCategory(category);
+        }
+
         image = imageRepository.save(image);
         return toDto(image);
     }
@@ -91,12 +97,26 @@ public class ImageServiceImpl implements ImageService {
         return images.stream().map(this::toDto).collect(Collectors.toList());
     }
 
+    @Override
+    public List<ImageDtoOut> getImagesByCategories(Set<String> categories) {
+        for (String category : categories) {
+            Category existCategory = categoryRepository.findByName(category);
+            if (existCategory == null) {
+                throw new EntityNotFoundException("Категория под именем '" + category + "' не существует в базе данных!");
+            }
+        }
+
+        List<Image> imageList = imageRepository.findByCategoryNameIn(categories);
+        return imageList.stream().map(this::toDto).collect(Collectors.toList());
+    }
+
     private ImageDtoOut toDto(Image image) {
         return new ImageDtoOut(image.getId(),
                 url + "/images/" + image.getUrl(),
                 image.getDate(),
                 image.getLat(),
-                image.getLng());
+                image.getLng(),
+                image.getCategory().getName());
     }
 
     private String saveImage(String base64Image) throws IOException {

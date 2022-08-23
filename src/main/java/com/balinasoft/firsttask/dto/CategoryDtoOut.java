@@ -14,24 +14,12 @@ import java.util.Date;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ImageDtoOut {
+public class CategoryDtoOut {
 
     @ApiModelProperty(required = true)
     int id;
 
     @ApiModelProperty(required = true)
-    String url;
+    String name;
 
-    @ApiModelProperty(required = true, dataType = "java.lang.Long", example = "1262307723")
-    @JsonSerialize(using = UnixTimestampSereliazer.class)
-    Date date;
-
-    @ApiModelProperty(required = true)
-    double lat;
-
-    @ApiModelProperty(required = true)
-    double lng;
-
-    @ApiModelProperty(required = true)
-    private String category;
 }
